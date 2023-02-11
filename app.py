@@ -33,74 +33,72 @@ array = []
 
 # Uncomment this section if you want to upload your own video
 # Sidebar
-# with st.sidebar:
-#     user_secret = st.text_input(label = ":blue[OpenAI API key]",
-#                                 value="",
-#                                 placeholder = "Paste your openAI API key, sk-",
-#                                 type = "password")
-#     youtube_link = st.text_input(label = ":red[Youtube link]",
-#                                 value="https://youtu.be/rQeXGvFAJDQ",
-#                                 placeholder = "")
-#     if youtube_link and user_secret:
-#         youtube_video = YouTube(youtube_link)
-#         video_id = pytube.extract.video_id(youtube_link)
-#         streams = youtube_video.streams.filter(only_audio=True)
-#         stream = streams.first()
-#         if st.button("Start Analysis"):
-#             if os.path.exists("word_embeddings.csv"):
-#                 os.remove("word_embeddings.csv")
-                
-#             with st.spinner('Running process...'):
-#                 # Get the video mp4
-#                 mp4_video = stream.download(filename='youtube_video.mp4')
-#                 audio_file = open(mp4_video, 'rb')
-#                 st.write(youtube_video.title)
-#                 st.video(youtube_link) 
-
-#                 # Whisper
-#                 output = model.transcribe("youtube_video.mp4")
-                
-#                 # Transcription
-#                 transcription = {
-#                     "title": youtube_video.title.strip(),
-#                     "transcription": output['text']
-#                 }
-#                 data_transcription.append(transcription)
-#                 pd.DataFrame(data_transcription).to_csv('transcription.csv') 
-#                 segments = output['segments']
-
-#                 # Pinacone index
-#                 # check if index_name index already exists (only create index if not)
-#                 # index_name = str(video_id)
-#                 # # check if 'index_name' index already exists (only create index if not)
-#                 # if 'index1' not in pinecone.list_indexes():
-#                 #     pinecone.create_index('index1', dimension=len(segments))
-#                 # # connect to index
-#                 # index = pinecone.Index('index1')
-                
-#                 #st.write(segments)
-#                 #Embeddings
-#                 for segment in segments:
-#                     openai.api_key = user_secret
-#                     response = openai.Embedding.create(
-#                         input= segment["text"].strip(),
-#                         model="text-embedding-ada-002"
-#                     )
-#                     embeddings = response['data'][0]['embedding']
-#                     meta = {
-#                         "text": segment["text"].strip(),
-#                         "start": segment['start'],
-#                         "end": segment['end'],
-#                         "embedding": embeddings
-#                     }
-#                     data.append(meta)
-#                 # upsert_response = index.upsert(
-#                 #         vectors=data,
-#                 #         namespace=video_id
-#                 #     )
-#                 pd.DataFrame(data).to_csv('word_embeddings.csv') 
-#                 os.remove("youtube_video.mp4")
-#                 st.success('Analysis completed')
+with st.sidebar:
+    user_secret = st.text_input(label = ":blue[OpenAI API key]",
+                                value="",
+                                placeholder = "Paste your openAI API key, sk-",
+                                type = "password")
+    youtube_link = st.text_input(label = ":red[Youtube link]",
+                                value="https://youtu.be/rQeXGvFAJDQ",
+                                placeholder = "")
+    if youtube_link and user_secret:
+        youtube_video = YouTube(youtube_link)
+        video_id = pytube.extract.video_id(youtube_link)
+        streams = youtube_video.streams.filter(only_audio=True)
+        stream = streams.first()
+        if st.button("Start Analysis"):
+            if os.path.exists("word_embeddings.csv"):
+                os.remove("word_embeddings.csv")
+              
+            with st.spinner('Running process...'):
+                # Get the video mp4
+                mp4_video = stream.download(filename='youtube_video.mp4')
+                audio_file = open(mp4_video, 'rb')
+                st.write(youtube_video.title)
+                st.video(youtube_link) 
+                # Whisper
+                output = model.transcribe("youtube_video.mp4")
+              
+                # Transcription
+                transcription = {
+                    "title": youtube_video.title.strip(),
+                    "transcription": output['text']
+                }
+                data_transcription.append(transcription)
+                pd.DataFrame(data_transcription).to_csv('transcription.csv') 
+                segments = output['segments']
+                # Pinacone index
+                # check if index_name index already exists (only create index if not)
+                # index_name = str(video_id)
+                # # check if 'index_name' index already exists (only create index if not)
+                # if 'index1' not in pinecone.list_indexes():
+                #     pinecone.create_index('index1', dimension=len(segments))
+                # # connect to index
+                # index = pinecone.Index('index1')
+              
+                #st.write(segments)
+                #Embeddings
+                for segment in segments:
+                    openai.api_key = user_secret
+                    response = openai.Embedding.create(
+                        input= segment["text"].strip(),
+                        model="text-embedding-ada-002"
+                    )
+                    embeddings = response['data'][0]['embedding']
+                    meta = {
+                        "text": segment["text"].strip(),
+                        "start": segment['start'],
+                        "end": segment['end'],
+                        "embedding": embeddings
+                    }
+                    data.append(meta)
+                upsert_response = index.upsert(
+                        vectors=data,
+                        namespace=video_id
+                )
+                pd.DataFrame(data).to_csv('word_embeddings.csv') 
+                os.remove("youtube_video.mp4")
+                st.success('Analysis completed')
 
 st.markdown('<h1>Youtube GPT 🤖<small> by <a href="https://codegpt.co">Code GPT</a></small></h1>', unsafe_allow_html=True)
 st.write("Start a chat with this video of Microsoft CEO Satya Nadella's interview. You just need to add your OpenAI API Key and paste it in the 'Chat with the video' tab.")
